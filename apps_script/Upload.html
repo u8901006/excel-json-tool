@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>從本機 JSON 填入耗量（完全一致）</title>
+  <style>
+    body { font-family: system-ui, "Noto Sans TC", Arial; padding:12px; }
+    .row { margin: 10px 0; }
+    .log { white-space: pre-wrap; background:#f6f7f9; border:1px solid #e3e6ea; padding:8px; height:120px; overflow:auto; }
+    button { padding:6px 12px; }
+    select, input[type="file"] { width:100%; }
+    .ok { color:#0a7; }
+    .err { color:#d33; }
+  </style>
+</head>
+<body>
+  <div class="row">
+    <label>選擇 JSON 檔（格式：[{"drug":"...", "total":123}, ...]）</label>
+    <input id="file" type="file" accept=".json,application/json">
+  </div>
+
+  <div class="row">
+    <label>選擇週別</label>
+    <select id="week">
+      <option value="1">第一週</option>
+      <option value="2">第二週</option>
+      <option value="3">第三週</option>
+      <option value="4">第四週</option>
+      <option value="5">第五週</option>
+    </select>
+  </div>
+
+  <div class="row">
+    <button id="go">上傳並寫入</button>
+    <button onclick="google.script.host.close()">關閉</button>
+  </div>
+
+  <div class="row">
+    <div id="log" class="log">請選檔後按「上傳並寫入」。</div>
+  </div>
+
+  <script>
+    const $ = sel => document.querySelector(sel);
+    const log = (msg, cls) => {
+      const box = $('#log');
+      const p = document.createElement('div');
+      if (cls) p.className = cls;
+      p.textContent = msg;
+      box.appendChild(p);
+      box.scrollTop = box.scrollHeight;
+    };
+
+    $('#go').addEventListener('click', async () => {
+      const file = $('#file').files[0];
+      const week = parseInt($('#week').value, 10);
+
+      if (!file) { log('請先選擇 JSON 檔。','err'); return; }
+      if (file.size > 5 * 1024 * 1024) {
+        log('檔案過大，請小於 5MB。','err'); return;
+      }
+
+      try {
+        const text = await file.text();
+        // 基本驗證
+        let data = JSON.parse(text);
+        if (!Array.isArray(data)) throw new Error('JSON 根節點不是陣列');
+        if (!data.length) throw new Error('JSON 為空');
+        const bad = data.find(r => !r || typeof r.drug !== 'string' || isNaN(Number(r.total)));
+        if (bad) throw new Error('資料列需包含：drug(字串)、total(數字)');
+
+        log(`已讀取：${file.name}（${(file.size/1024).toFixed(1)} KB）`);
+        $('#go').disabled = true;
+
+        google.script.run
+          .withSuccessHandler(res => {
+            log(`✅ 完成：${res.weekLabel} | 已寫入儲存格 ${res.writtenCells} 個、對齊藥品 ${res.matchedDrugs} 筆、對不到 ${res.missedCount} 筆`,'ok');
+            if (res.duplicatesUpdated && res.duplicatesUpdated.length){
+              log('注意：下列藥名在工作表有多筆，已全部更新：','ok');
+              res.duplicatesUpdated.forEach(x => log(`- ${x.name}（列：${x.rows.join(', ')}）`));
+            }
+            if (res.missedExamples && res.missedExamples.length){
+              log('對不到示例：','err');
+              res.missedExamples.forEach(x => log(`- ${x}`));
+            }
+            $('#go').disabled = false;
+          })
+          .withFailureHandler(err => {
+            log('❌ ' + (err && err.message || err),'err');
+            $('#go').disabled = false;
+          })
+          .WF_processUploadedJson(text, week);
+
+      } catch (e) {
+        log('❌ ' + e.message, 'err');
+      }
+    });
+  </script>
+</body>
+</html>
+

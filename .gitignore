@@ -21,5 +21,8 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Excel temp
+# Excel temp files
 ~$*.xls*
+
+# Apps Script (clasp 本機設定，可忽略)
+apps_script/.clasp.json
