@@ -1,3 +1,12 @@
+# Excel JSON Tool (Python) + Apps Script (Google Sheets)
+
+- `python_tool/`：讀 Excel (.xls/.xlsx) 輸出 `[{drug,total}]` JSON 的 GUI 工具。
+- `apps_script/`：Google 試算表的自動化（叫藥/庫存/從 JSON 匯入週耗量）。
+
+## 快速開始
+- Python：見 `python_tool/README.md`
+- Apps Script：把 `apps_script/Code.gs` 與 `Upload.html` 貼到 Apps Script 專案即可。
+
 # Excel to JSON (GUI)
 
 - 單檔 Python 工具：讀 Excel (.xls/.xlsx) 輸出 `[{drug,total}]` JSON。
