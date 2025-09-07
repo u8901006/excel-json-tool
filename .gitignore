@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+*.log
+
+# Virtual env
+.venv/
+venv/
+env/
+
+# Build / PyInstaller
+build/
+dist/
+*.spec
+
+# OS / Editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Excel temp
+~$*.xls*
